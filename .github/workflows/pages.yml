@@ -22,7 +22,10 @@ jobs:
       - uses: actions/setup-node@v4
         with:
           node-version: 20
-      - run: npm install
+          cache: npm
+      # --include=dev es necesario: si el entorno define NODE_ENV=production,
+      # npm omite Vite, TypeScript y Workbox y el build falla sin ellos.
+      - run: npm ci --include=dev
       # --base le dice a Vite en qué subruta vivirá la app: /nombre-del-repo/
       - run: npm run build -- --base=/${{ github.event.repository.name }}/
       - uses: actions/upload-pages-artifact@v3
