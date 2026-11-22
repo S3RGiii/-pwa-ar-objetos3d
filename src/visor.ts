@@ -120,7 +120,15 @@ export function crearVisor(contenedor: HTMLElement): Visor {
     camara.updateProjectionMatrix();
     sucio = true;
   }
-  ajustarTamano();
+  // Sesión 42 (hallazgo de Lighthouse: «forced reflow», 62 ms sin atribuir).
+  // Leer clientWidth a mitad del parseo obliga al navegador a recalcular el
+  // diseño antes de tiempo. Se espera a que el documento esté listo: si ya lo
+  // está, el primer dibujo va en el siguiente fotograma.
+  if (document.readyState === "complete") {
+    requestAnimationFrame(ajustarTamano);
+  } else {
+    window.addEventListener("load", () => requestAnimationFrame(ajustarTamano), { once: true });
+  }
   window.addEventListener("resize", ajustarTamano);
 
   let animacion = 0;
