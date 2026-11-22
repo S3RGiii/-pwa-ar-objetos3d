@@ -1,0 +1,54 @@
+Atlas 3D de Arquitectura de Software — checkpoint al cierre de la Sesión 42
+Electiva - PWA · UPTC (Sub-bloque B)
+
+Qué es esto
+-----------
+El Atlas 3D con sus TRES MODELOS DE ARQUITECTURA dibujados con Three.js, sin archivos
+.glb: patrón MVC, arquitectura en capas y microservicios. Cada modelo se describe con
+DATOS (piezas y enlaces) y un constructor genérico los convierte en mallas, flechas y
+rótulos. Se ven en 3D en la página, se tocan para leer qué hace cada pieza y se
+apoyan en tu mesa con realidad aumentada (◀ ▶ recorren las piezas dentro de AR).
+Las fichas ampliadas (public/modelos/*.json) se descargan para usarlas sin conexión.
+
+Novedades de la Sesión 42 (Lighthouse y cierre)
+------------------------------------------------
+  index.html            <meta name="description"> y un <main> que envuelve el contenido
+  src/style.css         espacio reservado para lo que se dibuja con JavaScript (.visor con
+                        aspect-ratio, .modelo-panel con min-height): CLS de 0,523 a 0,05
+  src/visor.ts          dibujo bajo demanda: solo se dibuja un fotograma si algo cambió
+                        (variable «sucio»), no 60 veces por segundo con la escena quieta
+  vite.config.ts        Three.js en su propio paquete (manualChunks): dos descargas cacheables
+  (de la Sesión 41: instalación guiada y estado de conexión; de la 40: modelos como datos)
+
+Medido con Lighthouse 13 (móvil, mediana de 3 corridas, Chromium sin GPU):
+  rendimiento 51 → 82 · accesibilidad 98 → 100 · SEO 90 → 100 · CLS 0,523 → 0,05 · TBT 1786 → 608 ms
+
+Cómo probarlo
+--------------
+  npm install
+  npm run build        (compila src/sw.ts y la app)
+  npm run preview      → http://localhost:4173
+
+  Hit-test y anclas necesitan un dispositivo AR. En el escritorio, el emulador
+  (Immersive Web Emulator) los ofrece pero DOM overlay no: sin overlay no llegan
+  los gestos con los dedos. Para verlo completo, usa un teléfono Android con
+  ARCore y Chrome, sirviendo la app por HTTPS (GitHub Pages: ver abajo).
+
+Verlo en un teléfono (GitHub Pages)
+------------------------------------
+  El proyecto ya es compatible con subrutas (usuario.github.io/nombre-repo/):
+  nada usa rutas absolutas; todo cuelga de import.meta.env.BASE_URL.
+  1. Crea un repositorio público y sube el proyecto (con .github/workflows).
+  2. Settings → Pages → Source: GitHub Actions.
+  3. Haz push a main: el flujo .github/workflows/pages.yml compila con
+     `npm run build -- --base=/nombre-del-repo/` y publica dist.
+  4. Abre https://usuario.github.io/nombre-del-repo/ en Chrome del teléfono.
+
+Limitaciones
+------------
+  - No funciona en iPhone: Safari no ofrece WebXR immersive-ar.
+  - Los gestos usan el overlay DOM: sin esa función solo queda «tocar para colocar».
+  - Un emulador comprueba el código, no sustituye a un teléfono con ARCore.
+  - Los modelos son esquemas didácticos (cajas, cilindros y flechas), no réplicas realistas.
+
+UPTC · Facultad de Ingeniería · Electiva - PWA
