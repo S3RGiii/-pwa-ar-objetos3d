@@ -1,0 +1,61 @@
+Atlas 3D de Arquitectura de Software — checkpoint al cierre de la Sesión 43 (versión con React)
+Electiva - PWA · UPTC (Sub-bloque B)
+
+Qué es esto
+-----------
+El Atlas 3D con sus TRES MODELOS DE ARQUITECTURA dibujados con Three.js, sin archivos
+.glb: patrón MVC, arquitectura en capas y microservicios. Cada modelo se describe con
+DATOS (piezas y enlaces) y un constructor genérico los convierte en mallas, flechas y
+rótulos. Se ven en 3D en la página, se tocan para leer qué hace cada pieza y se
+apoyan en tu mesa con realidad aumentada (◀ ▶ recorren las piezas dentro de AR).
+Las fichas ampliadas (public/modelos/*.json) se descargan para usarlas sin conexión.
+
+Novedades de la Sesión 43 (el Atlas en React)
+----------------------------------------------
+  src/main.tsx          monta <App /> en #root dentro de React.StrictMode (reemplaza a main.ts)
+  src/App.tsx           el árbol: visor, instalación, descargas, overlay de AR y catálogo
+  src/hooks/            la lógica sin pantalla: usePanel, useSensores, useCamara, useAR,
+                        useConexion, useInstalacion (useSyncExternalStore) y useProgreso
+  src/componentes/      ZonaVisor, PanelModelo, OverlayAR, ZonaInstalar, ZonaDescargas, Catalogo
+  src/instalar.ts       iniciarInstalacion() ahora devuelve cómo dejar de escuchar (limpieza del efecto)
+  vite.config.ts        plugin de React; React en su propio paquete; el Service Worker lo registra
+                        useRegisterSW (virtual:pwa-register/react)
+  index.html            solo <div id="root">; todo lo demás lo dibuja React
+  SIN CAMBIOS           visor.ts, xr.ts, sw.ts, db.ts, crypto.ts, descargas.ts, modelos/, manifest.json
+  Los ids y las clases del DOM son los mismos: las pruebas de las sesiones 39 a 42 pasan sin tocarlas.
+
+Medido (Lighthouse 13, móvil, mediana de 5 corridas, Chromium sin GPU):
+  S42: rendimiento 83 · FCP 1708 ms · LCP 2290 ms · TBT 554 ms
+  S43: rendimiento 91 · FCP 2248 ms · LCP 2393 ms · TBT 253 ms
+  JS: de 558,82 KiB a 778,17 KiB de precaché (React: 221,71 kB sin comprimir).
+
+Cómo probarlo
+--------------
+  npm install
+  npm run dev          (desarrollo con StrictMode: cada efecto se monta, se desmonta y se vuelve a montar)
+  npm run build        (compila src/sw.ts y la app)
+  npm run preview      → http://localhost:4173
+
+  Hit-test y anclas necesitan un dispositivo AR. En el escritorio, el emulador
+  (Immersive Web Emulator) los ofrece pero DOM overlay no: sin overlay no llegan
+  los gestos con los dedos. Para verlo completo, usa un teléfono Android con
+  ARCore y Chrome, sirviendo la app por HTTPS (GitHub Pages: ver abajo).
+
+Verlo en un teléfono (GitHub Pages)
+------------------------------------
+  El proyecto ya es compatible con subrutas (usuario.github.io/nombre-repo/):
+  nada usa rutas absolutas; todo cuelga de import.meta.env.BASE_URL.
+  1. Crea un repositorio público y sube el proyecto (con .github/workflows).
+  2. Settings → Pages → Source: GitHub Actions.
+  3. Haz push a main: el flujo .github/workflows/pages.yml compila con
+     `npm run build -- --base=/nombre-del-repo/` y publica dist.
+  4. Abre https://usuario.github.io/nombre-del-repo/ en Chrome del teléfono.
+
+Limitaciones
+------------
+  - No funciona en iPhone: Safari no ofrece WebXR immersive-ar.
+  - Los gestos usan el overlay DOM: sin esa función solo queda «tocar para colocar».
+  - Un emulador comprueba el código, no sustituye a un teléfono con ARCore.
+  - Los modelos son esquemas didácticos (cajas, cilindros y flechas), no réplicas realistas.
+
+UPTC · Facultad de Ingeniería · Electiva - PWA
