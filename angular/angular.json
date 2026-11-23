@@ -68,6 +68,15 @@
             }
           },
           "defaultConfiguration": "development"
+        },
+        "test": {
+          "builder": "@angular/build:unit-test",
+          "options": {
+            "tsConfig": "tsconfig.spec.json",
+            "buildTarget": "atlas:build:development",
+            "runner": "vitest",
+            "providersFile": "src/pruebas/proveedores.ts"
+          }
         }
       }
     }
