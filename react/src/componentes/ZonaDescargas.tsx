@@ -24,9 +24,9 @@ export function ZonaDescargas({ ids, dbPromesa, alCambiarDescargas, appLista }: 
   };
 
   // useRegisterSW avisa cuando el precaché quedó completo por primera vez.
-  useEffect(() => {
-    if (appLista) setMensaje("✓ La app ya funciona sin conexión.");
-  }, [appLista]);
+  // El mensaje se DERIVA de `appLista` en vez de escribirse con setState dentro
+  // del efecto: así no hay un render extra ni un estado que pueda desincronizarse.
+  const mensajeFinal = appLista ? "✓ La app ya funciona sin conexión." : null;
 
   // El SW informa el avance (y el final) a todas las ventanas abiertas.
   useEffect(() => {
@@ -91,7 +91,7 @@ export function ZonaDescargas({ ids, dbPromesa, alCambiarDescargas, appLista }: 
         <span id="estado-avisos" className="estado-avisos">{textoAvisos}</span>
       </div>
       <progress id="progreso-descarga" max={progreso?.total ?? 3} value={progreso?.hechos ?? 0} hidden={progreso === null} />
-      <p id="estado-descarga" className="estado-descarga" role="status">{mensaje}</p>
+      <p id="estado-descarga" className="estado-descarga" role="status">{mensajeFinal ?? mensaje}</p>
     </section>
   );
 }

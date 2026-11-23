@@ -20,10 +20,17 @@ export function useCamara(visor: Visor | null, video: RefObject<HTMLVideoElement
       apagar();
       return;
     }
+    // El <video> lo pinta ZonaVisor; si aún no está en el DOM, no hay dónde
+    // poner el stream. Se comprueba en vez de afirmarlo con `!`.
+    const elemento = video.current;
+    if (!elemento) {
+      avisar("El visor todavía no está listo. Inténtalo de nuevo en un momento.");
+      return;
+    }
     avisar("");
     try {
       // El permiso se pide AQUÍ, dentro del clic — no al cargar la página.
-      stream.current = await iniciarCamaraDeFondo(video.current!);
+      stream.current = await iniciarCamaraDeFondo(elemento);
     } catch (err) {
       avisar(describirErrorCamara(err));
       return;

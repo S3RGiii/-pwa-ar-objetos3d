@@ -69,6 +69,10 @@ export function useAR({ visor, overlay, avisar, antesDeEntrar }: Opciones) {
   }, []);
 
   useEffect(() => {
+    // Mismo caso que en useProgreso: `comprobar()` es async (consulta WebXR y
+    // lee IndexedDB), así que sus setState llegan tras un await, no durante el
+    // efecto. Diagnosticar el soporte de AR exige este patrón.
+    // eslint-disable-next-line react-hooks/set-state-in-effect
     void comprobar();
     const alCambiar = () => void comprobar();
     navigator.xr?.addEventListener("devicechange", alCambiar);
@@ -108,15 +112,20 @@ export function useAR({ visor, overlay, avisar, antesDeEntrar }: Opciones) {
 
   async function entrar() {
     if (!visor) return;
+    const nodoOverlay = overlay.current;
+    if (!nodoOverlay) {
+      avisar("La capa de realidad aumentada no está montada todavía.");
+      return;
+    }
     avisar("");
     antesDeEntrar();
     try {
       // La petición ocurre DENTRO del clic: es el «gesto del usuario» que exige WebXR.
-      const nueva = await pedirSesionAR(overlay.current);
+      const nueva = await pedirSesionAR(nodoOverlay);
       sesion.current = nueva;
       setEnSesion(true);
       const concedido = await visor.entrarEnAR(nueva, {
-        overlay: overlay.current!,
+        overlay: nodoOverlay,
         alCambiar: mostrar,
         alTerminar: () => {
           sesion.current = null;

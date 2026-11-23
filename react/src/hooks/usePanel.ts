@@ -32,12 +32,15 @@ export function usePanel(visor: Visor | null) {
     [visor]
   );
 
-  // Al arrancar: el primer modelo. Y cuando el usuario toca una pieza en la vista 3D, el visor avisa.
+  // Al arrancar: el primer modelo en el visor y el aviso de toque.
+  // El estado inicial ya es CATALOGO[0].id, así que aquí no hace falta setState:
+  // solo hay que decirle al visor (imperativo) qué modelo pintar.
   useEffect(() => {
     if (!visor) return;
-    elegirModelo(CATALOGO[0].id);
+    const def = modeloPorId(CATALOGO[0].id);
+    if (def) visor.mostrarModelo(def);
     visor.alTocarPieza((id) => setPiezaId(id));
-  }, [visor, elegirModelo]);
+  }, [visor]);
 
   // La ficha ampliada llega de la caché (sin conexión) o de la red; si no hay ninguna, se usa solo el código.
   useEffect(() => {

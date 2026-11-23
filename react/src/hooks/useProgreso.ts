@@ -8,22 +8,29 @@ import {
 import { cifrarTexto, derivarClaveDesdeContrasena, descifrarTexto, obtenerOCrearSal } from "../crypto";
 
 export function useProgreso() {
-  // La base se abre una sola vez; la promesa se guarda para que cualquier manejador pueda esperarla.
-  const dbPromesa = useRef<Promise<IDBDatabase> | null>(null);
-  if (dbPromesa.current === null) dbPromesa.current = abrirBaseDeDatos();
+  // La base se abre UNA sola vez por montaje. Se usa useState con inicializador
+  // perezoso (no useRef): el valor es estable entre renders, es seguro en
+  // StrictMode —que monta dos veces en desarrollo— y, sobre todo, NO se lee un
+  // ref durante el render, que es lo que prohíben las reglas de React.
+  const [dbLista] = useState<Promise<IDBDatabase>>(() => abrirBaseDeDatos());
   const claveSesion = useRef<CryptoKey | null>(null);
 
   const [progreso, setProgreso] = useState<Map<string, ProgresoModelo>>(new Map());
   const [descargados, setDescargados] = useState<Set<string>>(new Set());
 
   const recargar = useCallback(async () => {
-    const db = await dbPromesa.current!;
+    const db = await dbLista;
     const [todo, descargas] = await Promise.all([obtenerTodoElProgreso(db), obtenerDescargas(db)]);
     setProgreso(new Map(todo.map((p) => [p.modeloId, p])));
     setDescargados(new Set(descargas.filter((d) => d.estado === "listo").map((d) => d.modeloId)));
-  }, []);
+  }, [dbLista]);
 
   useEffect(() => {
+    // La regla react-hooks/set-state-in-effect avisa de esto, pero aquí es el
+    // patrón correcto: `recargar` es async y espera a IndexedDB, así que el
+    // setState ocurre en un microtask, no de forma síncrona durante el efecto.
+    // No hay forma de leer IndexedDB sin actualizar estado después.
+    // eslint-disable-next-line react-hooks/set-state-in-effect
     void recargar();
   }, [recargar]);
 
@@ -36,22 +43,22 @@ export function useProgreso() {
   }
 
   return {
-    dbPromesa: dbPromesa.current,
+    dbPromesa: dbLista,
     progreso,
     descargados,
     recargar,
     async marcarVisto(id: string) {
-      await marcarModeloVisto(await dbPromesa.current!, id);
+      await marcarModeloVisto(await dbLista, id);
       await recargar();
     },
     async alternarFavorito(id: string) {
-      await alternarFavorito(await dbPromesa.current!, id);
+      await alternarFavorito(await dbLista, id);
       await recargar();
     },
     async guardarNota(id: string, texto: string): Promise<boolean> {
       const clave = await obtenerClave();
       if (!clave) return false;
-      await guardarNotaDeEstudio(await dbPromesa.current!, clave, id, texto, cifrarTexto);
+      await guardarNotaDeEstudio(await dbLista, clave, id, texto, cifrarTexto);
       await recargar();
       return true;
     },

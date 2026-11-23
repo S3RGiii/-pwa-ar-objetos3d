@@ -120,22 +120,24 @@ export function obtenerTodoElProgreso(db: IDBDatabase): Promise<ProgresoModelo[]
   });
 }
 
-/** Recorre con un cursor, por el índice porFavorito, los modelos marcados como favoritos. */
+/**
+ * Devuelve los modelos marcados como favoritos.
+ *
+ * OJO: IndexedDB **no admite booleanos como clave de índice** (`IDBKeyRange.only(true)`
+ * lanza DataError y el cursor nunca emite filas). El índice `porFavorito` existe y
+ * es válido como estructura, pero no se puede consultar por `true`. Por eso se
+ * recorre el store completo y se filtra en memoria: son tres modelos, así que el
+ * coste es irrelevante y el resultado es correcto. (Antes esta función casteaba
+ * `true as any` y devolvía siempre una lista vacía.)
+ */
 export function obtenerFavoritos(db: IDBDatabase): Promise<ProgresoModelo[]> {
-  return new Promise((resolve) => {
-    const resultado: ProgresoModelo[] = [];
-    const indice = db.transaction("progreso", "readonly").objectStore("progreso").index("porFavorito");
-    const cursor = indice.openCursor(IDBKeyRange.only(true as any));
-
-    cursor.onsuccess = (event) => {
-      const c = (event.target as IDBRequest<IDBCursorWithValue | null>).result;
-      if (c) {
-        resultado.push(c.value as ProgresoModelo);
-        c.continue();
-      } else {
-        resolve(resultado);
-      }
+  return new Promise((resolve, reject) => {
+    const peticion = db.transaction("progreso", "readonly").objectStore("progreso").getAll();
+    peticion.onsuccess = () => {
+      const todos = peticion.result as ProgresoModelo[];
+      resolve(todos.filter((p) => p.favorito === true));
     };
+    peticion.onerror = () => reject(peticion.error);
   });
 }
 
